@@ -1,0 +1,327 @@
+{
+  "entities": {
+    "CloudBackup": {
+      "title": "CloudBackup",
+      "description": "AES-256-GCM encrypted snapshot of Saidpur kudduchiyya madrasah membership & financial records stored under the Admin/Manager Firebase user's vault.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the uploader (must match the authenticated user)."
+        },
+        "checksumSha256": {
+          "type": "string",
+          "description": "64-character hex SHA-256 integrity checksum of the encrypted payload."
+        },
+        "recordCount": {
+          "type": "integer",
+          "description": "Total count of member, obligation, payment, and correction records in the snapshot."
+        },
+        "encryptionAlg": {
+          "type": "string",
+          "description": "Encryption algorithm identifier (e.g., AES-256-GCM)."
+        },
+        "targetLocation": {
+          "type": "string",
+          "description": "Label describing backup origin/vault target."
+        },
+        "envelopeJson": {
+          "type": "string",
+          "description": "Serialized AES-256-GCM encrypted backup envelope JSON."
+        },
+        "createdByEmail": {
+          "type": "string",
+          "description": "Email address of the Firebase user who uploaded the backup."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the cloud backup was created."
+        }
+      },
+      "required": [
+        "ownerId",
+        "checksumSha256",
+        "recordCount",
+        "encryptionAlg",
+        "targetLocation",
+        "envelopeJson",
+        "createdAt"
+      ]
+    },
+    "PublicSiteConfig": {
+      "title": "PublicSiteConfig",
+      "description": "Public non-sensitive website profile and feature flags for Saidpur kudduchiyya madrasah (never stores API keys, passwords, or secrets).",
+      "type": "object",
+      "properties": {
+        "orgNameBn": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Organization display name in Bengali."
+        },
+        "orgNameEn": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Organization display name in English."
+        },
+        "committeeBn": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Committee subtitle in Bengali."
+        },
+        "committeeEn": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Committee subtitle in English."
+        },
+        "locationBn": {
+          "type": "string",
+          "maxLength": 180,
+          "description": "Madrasa address/location in Bengali."
+        },
+        "locationEn": {
+          "type": "string",
+          "maxLength": 180,
+          "description": "Madrasa address/location in English."
+        },
+        "establishedYear": {
+          "type": "string",
+          "maxLength": 16,
+          "description": "Year the madrasa was established."
+        },
+        "contactPhone": {
+          "type": "string",
+          "maxLength": 32,
+          "description": "Public contact phone number of the madrasa."
+        },
+        "adminEmail": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Public Admin contact Gmail address."
+        },
+        "adminName": {
+          "type": "string",
+          "maxLength": 120,
+          "description": "Primary Administrator display name."
+        },
+        "websiteDomain": {
+          "type": "string",
+          "maxLength": 180,
+          "description": "Primary configured website domain."
+        },
+        "currentActiveYear": {
+          "type": "integer",
+          "description": "Current active academic/financial year."
+        },
+        "publicNoticeBarEnabled": {
+          "type": "boolean",
+          "description": "Toggle for public homepage notice bar visibility."
+        },
+        "publicMemberLookupEnabled": {
+          "type": "boolean",
+          "description": "Toggle for public homepage member ledger lookup."
+        },
+        "gmailOtpEnabled": {
+          "type": "boolean",
+          "description": "Whether Gmail OTP verification is active."
+        },
+        "smsOtpEnabled": {
+          "type": "boolean",
+          "description": "Whether Mobile SMS OTP verification is active."
+        },
+        "firebasePhoneEnabled": {
+          "type": "boolean",
+          "description": "Whether Firebase Phone Auth SMS is active."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last server update timestamp."
+        },
+        "updatedByEmail": {
+          "type": "string",
+          "maxLength": 160,
+          "description": "Email of Admin who last synced public config."
+        }
+      },
+      "required": [
+        "orgNameBn",
+        "orgNameEn",
+        "contactPhone",
+        "adminEmail",
+        "currentActiveYear",
+        "updatedAt"
+      ]
+    },
+    "AdminControlConfig": {
+      "title": "AdminControlConfig",
+      "description": "Admin-only control plane settings stored safely in Firestore (never stores raw API keys, auth tokens, SMTP passwords, or password hashes).",
+      "type": "object",
+      "properties": {
+        "websiteDomain": {
+          "type": "string",
+          "maxLength": 180
+        },
+        "authorizedDomains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Authorized domains list (max 25 entries)."
+        },
+        "otpSenderEmail": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "smtpHost": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "smtpPort": {
+          "type": "integer"
+        },
+        "emailFrom": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "smsProvider": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "smsSenderId": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "smsGatewayUrl": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "twilioFromNumber": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "firebaseAuthDomain": {
+          "type": "string",
+          "maxLength": 180
+        },
+        "gmailOtpEnabled": {
+          "type": "boolean"
+        },
+        "smsOtpEnabled": {
+          "type": "boolean"
+        },
+        "firebasePhoneEnabled": {
+          "type": "boolean"
+        },
+        "allowPartialPayments": {
+          "type": "boolean"
+        },
+        "autoBackupEnabled": {
+          "type": "boolean"
+        },
+        "autoBackupIntervalHours": {
+          "type": "integer"
+        },
+        "hasFast2SmsKey": {
+          "type": "boolean"
+        },
+        "hasTwilioConfig": {
+          "type": "boolean"
+        },
+        "hasSmtpPass": {
+          "type": "boolean"
+        },
+        "hasResendKey": {
+          "type": "boolean"
+        },
+        "hasCustomSmsKey": {
+          "type": "boolean"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedByEmail": {
+          "type": "string",
+          "maxLength": 160
+        }
+      },
+      "required": [
+        "websiteDomain",
+        "authorizedDomains",
+        "smsProvider",
+        "gmailOtpEnabled",
+        "smsOtpEnabled",
+        "firebasePhoneEnabled",
+        "updatedAt"
+      ]
+    },
+    "AdminRegistryEntry": {
+      "title": "AdminRegistryEntry",
+      "description": "Authorized Admin registry entry synced to Firestore for multi-admin role verification.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "username": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "fullName": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "phone": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdByEmail": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "email",
+        "username",
+        "fullName",
+        "isActive",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/backups/{backupId}": {
+      "schema": {
+        "$ref": "#/entities/CloudBackup"
+      },
+      "description": "Encrypted backup vault snapshots scoped to each verified Firebase user UID."
+    },
+    "/siteConfig/{docId}": {
+      "schema": {
+        "$ref": "#/entities/PublicSiteConfig"
+      },
+      "description": "Singleton public website configuration ('public') readable for display and writable strictly by Admin."
+    },
+    "/adminSettings/{docId}": {
+      "schema": {
+        "$ref": "#/entities/AdminControlConfig"
+      },
+      "description": "Admin-only control settings ('config') storing domain, gateway non-secret metadata, and toggles."
+    },
+    "/admins/{adminId}": {
+      "schema": {
+        "$ref": "#/entities/AdminRegistryEntry"
+      },
+      "description": "Admin access registry keyed by sanitized lowercase email doc ID, readable/writable only by Admins."
+    }
+  }
+}

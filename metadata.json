@@ -1,0 +1,8 @@
+{
+  "name": "Remix Remix Syedpur Kuddusia Madrasa Membership Management System",
+  "description": "Multi-user membership, yearly fee ledger (2026-2050+), receipt, reporting, offline sync, and encrypted backup management software for Syedpur Kuddusia Madrasa.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,277 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default global deny-all rule
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function emailToAdminDocId(email) {
+      return email.lower().replace('[^a-z0-9_-]', '_');
+    }
+
+    function isBootstrappedAdmin() {
+      return isVerifiedUser()
+        && request.auth.token.email is string
+        && (
+          request.auth.token.email.lower() == 'farhan786pc@gmail.com'
+          || request.auth.token.email.lower() == 'pcm999621@gmail.com'
+        );
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin()
+        || (
+          isVerifiedUser()
+          && request.auth.token.email is string
+          && exists(/databases/$(database)/documents/admins/$(emailToAdminDocId(request.auth.token.email)))
+          && get(/databases/$(database)/documents/admins/$(emailToAdminDocId(request.auth.token.email))).data.isActive == true
+        );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 3 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_-]+$');
+    }
+
+    function isOptionalString(data, key, maxLen) {
+      return !(key in data) || (data[key] is string && data[key].size() <= maxLen);
+    }
+
+    function isOptionalBool(data, key) {
+      return !(key in data) || data[key] is bool;
+    }
+
+    function isValidCloudBackup(data, userId) {
+      return data.keys().hasAll([
+        'ownerId',
+        'checksumSha256',
+        'recordCount',
+        'encryptionAlg',
+        'targetLocation',
+        'envelopeJson',
+        'createdAt'
+      ])
+      && data.keys().hasOnly([
+        'ownerId',
+        'checksumSha256',
+        'recordCount',
+        'encryptionAlg',
+        'targetLocation',
+        'envelopeJson',
+        'createdAt',
+        'createdByEmail'
+      ])
+      && data.ownerId is string
+      && data.ownerId == userId
+      && data.ownerId == request.auth.uid
+      && data.checksumSha256 is string
+      && data.checksumSha256.size() == 64
+      && data.recordCount is int
+      && data.recordCount >= 0
+      && data.recordCount <= 1000000
+      && data.encryptionAlg is string
+      && data.encryptionAlg.size() >= 3
+      && data.encryptionAlg.size() <= 64
+      && data.targetLocation is string
+      && data.targetLocation.size() >= 2
+      && data.targetLocation.size() <= 120
+      && data.envelopeJson is string
+      && data.envelopeJson.size() >= 10
+      && data.envelopeJson.size() <= 950000
+      && data.createdAt is timestamp
+      && data.createdAt <= request.time + duration.value(5, 'm')
+      && (!('createdByEmail' in data) || (data.createdByEmail is string && data.createdByEmail.size() <= 160));
+    }
+
+    function isValidPublicSiteConfig(data) {
+      return data.keys().hasAll([
+        'orgNameBn',
+        'orgNameEn',
+        'contactPhone',
+        'adminEmail',
+        'currentActiveYear',
+        'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'orgNameBn',
+        'orgNameEn',
+        'committeeBn',
+        'committeeEn',
+        'locationBn',
+        'locationEn',
+        'establishedYear',
+        'contactPhone',
+        'adminEmail',
+        'adminName',
+        'websiteDomain',
+        'currentActiveYear',
+        'publicNoticeBarEnabled',
+        'publicMemberLookupEnabled',
+        'gmailOtpEnabled',
+        'smsOtpEnabled',
+        'firebasePhoneEnabled',
+        'updatedAt',
+        'updatedByEmail'
+      ])
+      && data.orgNameBn is string && data.orgNameBn.size() >= 1 && data.orgNameBn.size() <= 160
+      && data.orgNameEn is string && data.orgNameEn.size() >= 1 && data.orgNameEn.size() <= 160
+      && data.contactPhone is string && data.contactPhone.size() >= 6 && data.contactPhone.size() <= 32
+      && data.adminEmail is string && data.adminEmail.size() >= 3 && data.adminEmail.size() <= 160
+      && data.currentActiveYear is int && data.currentActiveYear >= 2020 && data.currentActiveYear <= 2100
+      && data.updatedAt is timestamp && data.updatedAt <= request.time + duration.value(5, 'm')
+      && isOptionalString(data, 'committeeBn', 160)
+      && isOptionalString(data, 'committeeEn', 160)
+      && isOptionalString(data, 'locationBn', 180)
+      && isOptionalString(data, 'locationEn', 180)
+      && isOptionalString(data, 'establishedYear', 16)
+      && isOptionalString(data, 'adminName', 120)
+      && isOptionalString(data, 'websiteDomain', 180)
+      && isOptionalString(data, 'updatedByEmail', 160)
+      && isOptionalBool(data, 'publicNoticeBarEnabled')
+      && isOptionalBool(data, 'publicMemberLookupEnabled')
+      && isOptionalBool(data, 'gmailOtpEnabled')
+      && isOptionalBool(data, 'smsOtpEnabled')
+      && isOptionalBool(data, 'firebasePhoneEnabled');
+    }
+
+    function isValidAdminControlConfig(data) {
+      return data.keys().hasAll([
+        'websiteDomain',
+        'authorizedDomains',
+        'smsProvider',
+        'gmailOtpEnabled',
+        'smsOtpEnabled',
+        'firebasePhoneEnabled',
+        'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'websiteDomain',
+        'authorizedDomains',
+        'otpSenderEmail',
+        'smtpHost',
+        'smtpPort',
+        'emailFrom',
+        'smsProvider',
+        'smsSenderId',
+        'smsGatewayUrl',
+        'twilioFromNumber',
+        'firebaseAuthDomain',
+        'gmailOtpEnabled',
+        'smsOtpEnabled',
+        'firebasePhoneEnabled',
+        'allowPartialPayments',
+        'autoBackupEnabled',
+        'autoBackupIntervalHours',
+        'hasFast2SmsKey',
+        'hasTwilioConfig',
+        'hasSmtpPass',
+        'hasResendKey',
+        'hasCustomSmsKey',
+        'updatedAt',
+        'updatedByEmail'
+      ])
+      && data.websiteDomain is string && data.websiteDomain.size() <= 180
+      && data.authorizedDomains is list && data.authorizedDomains.size() <= 25
+      && data.smsProvider is string && data.smsProvider.size() >= 2 && data.smsProvider.size() <= 40
+      && data.gmailOtpEnabled is bool
+      && data.smsOtpEnabled is bool
+      && data.firebasePhoneEnabled is bool
+      && data.updatedAt is timestamp && data.updatedAt <= request.time + duration.value(5, 'm')
+      && isOptionalString(data, 'otpSenderEmail', 160)
+      && isOptionalString(data, 'smtpHost', 120)
+      && (!('smtpPort' in data) || (data.smtpPort is int && data.smtpPort >= 1 && data.smtpPort <= 65535))
+      && isOptionalString(data, 'emailFrom', 160)
+      && isOptionalString(data, 'smsSenderId', 32)
+      && isOptionalString(data, 'smsGatewayUrl', 240)
+      && isOptionalString(data, 'twilioFromNumber', 32)
+      && isOptionalString(data, 'firebaseAuthDomain', 180)
+      && isOptionalString(data, 'updatedByEmail', 160)
+      && isOptionalBool(data, 'allowPartialPayments')
+      && isOptionalBool(data, 'autoBackupEnabled')
+      && (!('autoBackupIntervalHours' in data) || (data.autoBackupIntervalHours is int && data.autoBackupIntervalHours >= 1 && data.autoBackupIntervalHours <= 720))
+      && isOptionalBool(data, 'hasFast2SmsKey')
+      && isOptionalBool(data, 'hasTwilioConfig')
+      && isOptionalBool(data, 'hasSmtpPass')
+      && isOptionalBool(data, 'hasResendKey')
+      && isOptionalBool(data, 'hasCustomSmsKey');
+    }
+
+    function isValidAdminRegistryEntry(data, adminId) {
+      return data.keys().hasAll([
+        'email',
+        'username',
+        'fullName',
+        'isActive',
+        'updatedAt'
+      ])
+      && data.keys().hasOnly([
+        'email',
+        'username',
+        'fullName',
+        'phone',
+        'isActive',
+        'createdByEmail',
+        'updatedAt'
+      ])
+      && data.email is string && data.email.size() >= 3 && data.email.size() <= 160
+      && emailToAdminDocId(data.email) == adminId
+      && data.username is string && data.username.size() >= 2 && data.username.size() <= 64
+      && data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 120
+      && data.isActive is bool
+      && data.updatedAt is timestamp && data.updatedAt <= request.time + duration.value(5, 'm')
+      && isOptionalString(data, 'phone', 32)
+      && isOptionalString(data, 'createdByEmail', 160);
+    }
+
+    // Connectivity probe document
+    match /test/{docId} {
+      allow get: if isSignedIn();
+      allow list, write: if false;
+    }
+
+    // Public non-secret site config (singleton 'public') - writable strictly by Admin
+    match /siteConfig/{docId} {
+      allow get: if isValidId(docId) && docId == 'public' && isSignedIn();
+      allow list: if false;
+      allow create, update: if isValidId(docId) && docId == 'public' && isAdmin() && isValidPublicSiteConfig(request.resource.data);
+      allow delete: if false;
+    }
+
+    // Admin-only non-secret system settings control plane (singleton 'config')
+    match /adminSettings/{docId} {
+      allow get: if isValidId(docId) && docId == 'config' && isAdmin();
+      allow list: if false;
+      allow create, update: if isValidId(docId) && docId == 'config' && isAdmin() && isValidAdminControlConfig(request.resource.data);
+      allow delete: if false;
+    }
+
+    // Dynamic Admin allowlist registry (strictly Admin-only)
+    match /admins/{adminId} {
+      allow get: if isValidId(adminId) && isAdmin();
+      allow list: if isBootstrappedAdmin() && resource.data.email is string && (request.query.limit != null && request.query.limit <= 50);
+      allow create, update: if isValidId(adminId) && isAdmin() && isValidAdminRegistryEntry(request.resource.data, adminId);
+      allow delete: if isValidId(adminId) && isAdmin();
+    }
+
+    // User-scoped AES-256-GCM Encrypted Cloud Backup Vault (immutable snapshots)
+    match /users/{userId}/backups/{backupId} {
+      allow get: if isValidId(userId) && isValidId(backupId) && isVerifiedUser() && (isOwner(userId) || isAdmin());
+      allow list: if isVerifiedUser() && (isOwner(userId) || isBootstrappedAdmin()) && resource.data.ownerId == userId && (request.query.limit != null && request.query.limit <= 50);
+      allow create: if isValidId(userId) && isValidId(backupId) && isVerifiedUser() && isOwner(userId) && isValidCloudBackup(request.resource.data, userId);
+      allow update: if false;
+      allow delete: if isValidId(userId) && isValidId(backupId) && isVerifiedUser() && (isOwner(userId) || isAdmin());
+    }
+  }
+}
